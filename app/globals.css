@@ -1,26 +1,51 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 250 245 242;  /* #FAF8F5 - Linen */
+    --foreground: 43 43 43;     /* #2B2B2B - Gris anthracite */
+    --muted: 85 85 85;          /* #555555 - Gris souris */
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    background-image: radial-gradient(circle at 25% 40%, rgba(139, 119, 101, 0.03) 1.5%, transparent 1.8%);
+    background-size: 48px 48px;
+  }
+}
+
+/* Curseur personnalisé (ordinateur uniquement) - désactivé temporairement pour le confort */
+/*
+@media (min-width: 768px) {
+  .custom-cursor {
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid rgba(120, 140, 120, 0.35);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+  
+  .custom-cursor.hover {
+    transform: scale(1.4);
+    background-color: rgba(120, 140, 120, 0.08);
+  }
+}
+*/
+
+/* Animations personnalisées */
+@keyframes soft-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+.animate-soft-float {
+  animation: soft-float 2.5s ease-in-out infinite;
 }
