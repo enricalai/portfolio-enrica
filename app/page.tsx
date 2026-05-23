@@ -63,19 +63,20 @@ const getAspectClass = (orientation: string) => {
 };
 
 // ========== ANIMATION VARIANTS ==========
+// ========== ANIMATION VARIANTS ==========
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } }
 };
 
 const fadeInLeft = {
   hidden: { opacity: 0, x: -40 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" as const } }
 };
 
 const fadeInRight = {
   hidden: { opacity: 0, x: 40 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" as const } }
 };
 
 const staggerContainer = {
@@ -91,11 +92,10 @@ const cardHover = {
   hover: { 
     scale: 1.03, 
     y: -10,
-    transition: { duration: 0.3, type: "spring", stiffness: 300 }
+    transition: { duration: 0.3, type: "spring" as const, stiffness: 300 }
   }
 };
 
-// Animation lettre par lettre
 const letterAnimation = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
