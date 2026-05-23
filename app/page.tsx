@@ -1,8 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import emailjs from '@emailjs/browser';
 
 // ========== ARTWORK CATEGORIES ==========
 const categories = [
@@ -61,18 +62,47 @@ const getAspectClass = (orientation: string) => {
   }
 };
 
-// ========== ANIMATION ==========
+// ========== ANIMATION VARIANTS ==========
 const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+};
+
+const fadeInLeft = {
+  hidden: { opacity: 0, x: -40 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } }
+};
+
+const fadeInRight = {
+  hidden: { opacity: 0, x: 40 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } }
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 }
   }
+};
+
+const cardHover = {
+  rest: { scale: 1, y: 0 },
+  hover: { 
+    scale: 1.03, 
+    y: -10,
+    transition: { duration: 0.3, type: "spring", stiffness: 300 }
+  }
+};
+
+// Animation lettre par lettre
+const letterAnimation = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.03, duration: 0.4 }
+  })
 };
 
 // ========== MAIN COMPONENT ==========
@@ -81,12 +111,26 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formError, setFormError] = useState(false);
+  
+  const formRef = useRef<HTMLFormElement>(null);
+  
+  // Effets parallaxe au scroll
+  const { scrollYProgress } = useScroll();
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0.2]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.95]);
+  const portraitBlur = useTransform(scrollYProgress, [0, 0.2], [0, 5]);
+  const portraitScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9]);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
     window.addEventListener("scroll", handleScroll);
+    
+    emailjs.init({
+      publicKey: 'A9Y0CJG-BEYUA3DEL',
+    });
+    
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -95,113 +139,197 @@ export default function Home() {
       ? artworks
       : artworks.filter((a) => a.technique === selectedCategory);
 
-  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const sendEmail = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch(form.action, {
-        method: "POST",
-        body: formData,
-        headers: {
-          Accept: "application/json",
-        },
-      });
-
-      if (response.ok) {
+    
+    setFormSubmitted(false);
+    setFormError(false);
+    
+    emailjs.sendForm(
+      'service_u583m19',
+      'template_69nnm59',
+      formRef.current!,
+      {
+        publicKey: 'A9Y0CJG-BEYUA3DEL',
+      }
+    ).then(
+      (result) => {
+        console.log('Email envoyé avec succès:', result.text);
         setFormSubmitted(true);
         setFormError(false);
-        form.reset();
+        formRef.current?.reset();
         setTimeout(() => setFormSubmitted(false), 5000);
-      } else {
+      },
+      (error) => {
+        console.log('Erreur EmailJS:', error.text);
         setFormError(true);
         setTimeout(() => setFormError(false), 5000);
       }
-    } catch (error) {
-      setFormError(true);
-      setTimeout(() => setFormError(false), 5000);
-    }
+    );
   };
 
+  // Découpage du titre en lettres
+  const titleText = "Enrica Lai";
+  const titleLetters = titleText.split("");
+
   return (
-    <main className="bg-[#FDF9F5]">
+    <main className="bg-[#FDF9F5] overflow-x-hidden">
       
-      {/* ========== STICKY MENU ========== */}
+      {/* ========== STICKY MENU AVEC GLASSMORPHISM ========== */}
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
         className={`fixed top-0 left-0 right-0 z-50 py-5 px-6 md:px-12 transition-all duration-500 ${
           scrolled
-            ? "bg-[#FDF9F5]/90 backdrop-blur-md shadow-sm"
+            ? "bg-[#FDF9F5]/80 backdrop-blur-xl shadow-lg"
             : "bg-transparent"
         }`}
       >
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <span className="font-serif text-lg tracking-wide text-[#2B2B2B]">
+          <motion.span 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="font-serif text-lg tracking-wide text-[#2B2B2B]"
+          >
             Enrica Lai
-          </span>
+          </motion.span>
           <div className="flex gap-8 text-[12px] tracking-[0.15em] uppercase">
-            {["About", "Work", "Contact"].map((item) => (
-              <a
+            {["About", "Work", "Contact"].map((item, idx) => (
+              <motion.a
                 key={item}
                 href={`#${item.toLowerCase()}`}
-                className="text-[#555555] hover:text-[#C47A4D] transition-colors duration-300"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 + idx * 0.1 }}
+                whileHover={{ scale: 1.05, color: "#C47A4D" }}
+                className="text-[#555555] hover:text-[#C47A4D] transition-all duration-300"
               >
                 {item}
-              </a>
+              </motion.a>
             ))}
           </div>
         </div>
       </motion.nav>
 
-      {/* ========== HERO SECTION ========== */}
-      <section id="home" className="min-h-screen flex items-center px-6 md:px-12 pt-28 pb-16">
-        <div className="max-w-6xl mx-auto w-full">
+      {/* ========== HERO SECTION AVEC PARALLAXE ========== */}
+      <motion.section 
+        id="home" 
+        style={{ opacity: heroOpacity, scale: heroScale }}
+        className="min-h-screen flex items-center px-6 md:px-12 pt-28 pb-16 relative overflow-hidden"
+      >
+        {/* Cercles décoratifs animés */}
+        <motion.div
+          animate={{ 
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 0],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute top-20 -right-20 w-96 h-96 bg-[#C47A4D]/5 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{ 
+            scale: [1, 1.3, 1],
+            rotate: [0, -90, 0],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-40 -left-20 w-96 h-96 bg-[#8B9E8B]/5 rounded-full blur-3xl"
+        />
+        
+        <div className="max-w-6xl mx-auto w-full relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             
-            {/* Left - Text */}
+            {/* Left - Text avec animation lettre par lettre */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInLeft}
             >
-              <div className="inline-block px-3 py-1 bg-[#C47A4D]/10 rounded-full mb-6">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+                className="inline-block px-3 py-1 bg-[#C47A4D]/10 rounded-full mb-6"
+              >
                 <span className="text-[#C47A4D] text-xs tracking-wider">Visual Artist</span>
-              </div>
+              </motion.div>
+              
               <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl font-light text-[#2B2B2B] leading-tight">
-                Enrica <span className="text-[#C47A4D]">Lai</span>
+                {titleLetters.map((letter, index) => (
+                  <motion.span
+                    key={index}
+                    custom={index}
+                    variants={letterAnimation}
+                    initial="hidden"
+                    animate="visible"
+                    className="inline-block"
+                  >
+                    {letter === " " ? "\u00A0" : letter}
+                  </motion.span>
+                ))}
               </h1>
-              <p className="text-[#555555] text-base leading-relaxed mt-6 max-w-md">
-                Exploring the balance between traditional drawing and digital space. 
-                Each line carries the intention of a refined, silent gesture.
-              </p>
-              <div className="flex gap-4 mt-8">
-                <a
+              
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8, duration: 0.6 }}
+                className="text-[#555555] text-base leading-relaxed mt-6 max-w-md"
+              >
+                “And now here is my secret, a very simple secret:
+It is only with the heart that one can see rightly;
+what is essential is invisible to the eye.”
+— The Little Prince
+              </motion.p>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 0.5 }}
+                className="flex gap-4 mt-8"
+              >
+                <motion.a
                   href="#work"
-                  className="px-6 py-2.5 bg-[#C47A4D] text-white rounded-full text-sm tracking-wider hover:bg-[#B56A3D] transition-all duration-300"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-6 py-2.5 bg-[#C47A4D] text-white rounded-full text-sm tracking-wider hover:bg-[#B56A3D] transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   View Gallery
-                </a>
-                <a
+                </motion.a>
+                <motion.a
                   href="#contact"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   className="px-6 py-2.5 border border-[#C47A4D]/30 text-[#C47A4D] rounded-full text-sm tracking-wider hover:bg-[#C47A4D]/5 transition-all duration-300"
                 >
                   Contact
-                </a>
-              </div>
+                </motion.a>
+              </motion.div>
             </motion.div>
 
-            {/* Right - Portrait */}
+            {/* Right - Portrait avec effet de flou au scroll */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              style={{ 
+                scale: portraitScale,
+                filter: `blur(${portraitBlur}px)`
+              }}
               className="flex justify-center"
             >
-              <div className="relative w-72 h-72 md:w-80 md:h-80 lg:w-96 lg:h-96">
-                <div className="absolute -inset-3 rounded-full bg-[#C47A4D]/20 blur-2xl" />
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+                className="relative w-72 h-72 md:w-80 md:h-80 lg:w-96 lg:h-96"
+              >
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute -inset-3 rounded-full bg-gradient-to-r from-[#C47A4D]/30 to-[#8B9E8B]/30 blur-2xl"
+                />
                 <div className="relative w-full h-full rounded-full overflow-hidden shadow-xl ring-4 ring-[#C47A4D]/20">
                   <Image
                     src="/images/portrait/portrait.jpg"
@@ -214,16 +342,29 @@ export default function Home() {
                     unoptimized
                   />
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* ========== ABOUT SECTION - 2 COLUMNES ========== */}
-      <section id="about" className="px-6 md:px-12 py-20">
-        <div className="max-w-6xl mx-auto">
-          
+      {/* ========== ABOUT SECTION ========== */}
+      <motion.section
+        id="about"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={fadeInUp}
+        className="px-6 md:px-12 py-20 relative overflow-hidden"
+      >
+        {/* Décoration flottante */}
+        <motion.div
+          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute top-20 right-10 w-64 h-64 bg-[#C47A4D]/5 rounded-full blur-3xl"
+        />
+        
+        <div className="max-w-6xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -239,12 +380,11 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-start">
             
-            {/* Left Column - Texte original */}
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              initial="hidden"
+              whileInView="visible"
               viewport={{ once: true }}
+              variants={fadeInLeft}
               className="space-y-6"
             >
               <div className="space-y-5 text-[#555555] leading-relaxed font-light">
@@ -274,12 +414,11 @@ export default function Home() {
               </div>
             </motion.div>
 
-            {/* Right Column - About Me, Techniques, Exhibitions & Honors */}
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
+              initial="hidden"
+              whileInView="visible"
               viewport={{ once: true }}
+              variants={fadeInRight}
               className="space-y-8"
             >
               <div>
@@ -302,7 +441,7 @@ export default function Home() {
                       whileInView={{ opacity: 1, scale: 1 }}
                       transition={{ delay: idx * 0.05 }}
                       viewport={{ once: true }}
-                      whileHover={{ scale: 1.05, backgroundColor: "#C47A4D", color: "white" }}
+                      whileHover={{ scale: 1.1, backgroundColor: "#C47A4D", color: "white" }}
                       className="px-3 py-1 bg-[#C47A4D]/10 rounded-full text-[#555555] text-xs tracking-wide cursor-default transition-all duration-300"
                     >
                       {skill}
@@ -324,11 +463,17 @@ export default function Home() {
                       key={idx}
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.08 }}
+                      transition={{ delay: idx * 0.1 }}
                       viewport={{ once: true }}
                       className="flex items-start gap-2"
                     >
-                      <span className="text-[#C47A4D]">✦</span>
+                      <motion.span
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ delay: idx * 0.1, duration: 0.5 }}
+                        className="text-[#C47A4D]"
+                      >
+                        ✦
+                      </motion.span>
                       <span>{exhibition}</span>
                     </motion.li>
                   ))}
@@ -351,18 +496,31 @@ export default function Home() {
                 </ul>
               </div>
 
-              <div className="border-l-2 border-[#C47A4D]/30 pl-5 py-2">
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                viewport={{ once: true }}
+                className="border-l-2 border-[#C47A4D]/30 pl-5 py-2"
+              >
                 <p className="text-[#8B9E8B] text-xs tracking-wider uppercase">
                   "Art is the most beautiful of illusions"
                 </p>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ========== GALLERY SECTION ========== */}
-      <section id="work" className="px-6 md:px-12 py-20 bg-[#F5F0EA]">
+      <motion.section
+        id="work"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={fadeInUp}
+        className="px-6 md:px-12 py-20 bg-[#F5F0EA]"
+      >
         <div className="max-w-6xl mx-auto">
           
           <motion.div
@@ -383,30 +541,35 @@ export default function Home() {
             </p>
           </motion.div>
 
-          {/* Filters */}
+          {/* Filters avec animations */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
+            variants={fadeInUp}
             className="flex flex-wrap gap-2 mb-10 pb-2 border-b border-[#C47A4D]/10"
           >
-            {categories.map((cat) => (
-              <button
+            {categories.map((cat, idx) => (
+              <motion.button
                 key={cat}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.03 }}
                 onClick={() => setSelectedCategory(cat)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 className={`px-4 py-1.5 text-xs rounded-full transition-all duration-300 ${
                   selectedCategory === cat
-                    ? "bg-[#C47A4D] text-white"
+                    ? "bg-[#C47A4D] text-white shadow-md"
                     : "text-[#555555] hover:text-[#C47A4D]"
                 }`}
               >
                 {cat}
-              </button>
+              </motion.button>
             ))}
           </motion.div>
 
-          {/* Grid */}
+          {/* Grid avec effets stagger et hover */}
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -418,22 +581,34 @@ export default function Home() {
               <motion.div
                 key={artwork.id}
                 variants={fadeInUp}
-                whileHover={{ y: -5 }}
+                initial="rest"
+                whileHover="hover"
+                animate="rest"
                 className="group"
               >
-                <div className={`relative ${getAspectClass(artwork.orientation)} overflow-hidden bg-white rounded-lg shadow-sm`}>
+                <motion.div
+                  variants={cardHover}
+                  className={`relative ${getAspectClass(artwork.orientation)} overflow-hidden bg-white rounded-lg shadow-sm group-hover:shadow-xl transition-all duration-500`}
+                >
                   <Image
                     src={artwork.image}
                     alt={artwork.title}
                     fill
-                    className="object-contain transition-transform duration-500 group-hover:scale-105"
+                    className="object-contain transition-transform duration-700 group-hover:scale-110"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     quality={95}
                     unoptimized
                   />
-                </div>
-                <div className="mt-3">
-                  <h3 className="font-serif text-base text-[#2B2B2B]">{artwork.title}</h3>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    whileHover={{ opacity: 1 }}
+                    className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent transition-opacity duration-500"
+                  />
+                </motion.div>
+                <div className="mt-3 text-center">
+                  <h3 className="font-serif text-base text-[#2B2B2B] group-hover:text-[#C47A4D] transition-colors">
+                    {artwork.title}
+                  </h3>
                   <p className="text-[#C47A4D] text-xs tracking-wider mt-0.5">{artwork.technique}</p>
                   <p className="text-[#555555]/60 text-xs mt-0.5">{artwork.dimensions} • {artwork.year}</p>
                 </div>
@@ -442,16 +617,35 @@ export default function Home() {
           </motion.div>
 
           {filteredArtworks.length === 0 && (
-            <div className="text-center py-16 text-[#555555]">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-16 text-[#555555]"
+            >
               <p>No artworks in this category.</p>
-            </div>
+            </motion.div>
           )}
         </div>
-      </section>
+      </motion.section>
 
       {/* ========== CONTACT SECTION ========== */}
-      <section id="contact" className="px-6 md:px-12 py-20">
-        <div className="max-w-4xl mx-auto">
+      <motion.section
+        id="contact"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={fadeInUp}
+        className="px-6 md:px-12 py-20 relative overflow-hidden"
+      >
+        <div className="absolute inset-0 pointer-events-none">
+          <motion.div
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            className="absolute top-0 left-1/4 w-64 h-64 bg-[#C47A4D]/5 rounded-full blur-3xl"
+          />
+        </div>
+
+        <div className="max-w-4xl mx-auto relative z-10">
           
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -471,12 +665,12 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 gap-10">
             
-            {/* Contact Info */}
+            {/* Contact Info avec animations */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              initial="hidden"
+              whileInView="visible"
               viewport={{ once: true }}
+              variants={fadeInLeft}
               className="space-y-6"
             >
               <div>
@@ -485,69 +679,96 @@ export default function Home() {
               </div>
 
               <div className="space-y-3">
-                <a
+                <motion.a
                   href="mailto:laitroysanlyzeeenrica@gmail.com"
-                  className="flex items-center gap-3 text-[#555555] hover:text-[#C47A4D] transition-colors"
+                  whileHover={{ x: 5, color: "#C47A4D" }}
+                  className="flex items-center gap-3 text-[#555555] transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   <span className="text-sm">laitroysanlyzeeenrica@gmail.com</span>
-                </a>
+                </motion.a>
 
-                <div className="flex items-center gap-3 text-[#555555]">
+                <motion.div
+                  whileHover={{ x: 5 }}
+                  className="flex items-center gap-3 text-[#555555]"
+                >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <span className="text-sm">Fianarantsoa / Madagascar</span>
-                </div>
+                </motion.div>
 
-                <a
+                <motion.a
                   href="https://wa.me/261328105313"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-[#555555] hover:text-[#25D366] transition-colors"
+                  whileHover={{ x: 5, color: "#25D366" }}
+                  className="flex items-center gap-3 text-[#555555] transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                   <span className="text-sm">+261 32 81 053 13</span>
-                </a>
+                </motion.a>
               </div>
 
               <div>
                 <h3 className="font-serif text-base text-[#2B2B2B] mb-3">Social</h3>
                 <div className="flex gap-4">
-                  <a href="https://instagram.com/lai_troysan" target="_blank" rel="noopener noreferrer" className="text-[#555555] hover:text-[#e4405f] transition-colors text-sm">Instagram</a>
-                  <a href="https://facebook.com/EnricasSketchbook" target="_blank" rel="noopener noreferrer" className="text-[#555555] hover:text-[#1877f2] transition-colors text-sm">Facebook</a>
-                  <a href="https://tiktok.com/@lyzee_enrica_lai" target="_blank" rel="noopener noreferrer" className="text-[#555555] hover:text-black transition-colors text-sm">TikTok</a>
+                  {[
+                    { name: "Instagram", href: "https://instagram.com/lai_troysan", color: "hover:text-[#e4405f]" },
+                    { name: "Facebook", href: "https://facebook.com/EnricasSketchbook", color: "hover:text-[#1877f2]" },
+                    { name: "TikTok", href: "https://tiktok.com/@lyzee_enrica_lai", color: "hover:text-black" }
+                  ].map((social, idx) => (
+                    <motion.a
+                      key={social.name}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 + idx * 0.1 }}
+                      whileHover={{ scale: 1.1, y: -2 }}
+                      className={`text-[#555555] ${social.color} transition-all text-sm`}
+                    >
+                      {social.name}
+                    </motion.a>
+                  ))}
                 </div>
               </div>
             </motion.div>
 
-            {/* Formulaire - Version Formspree avec feedback */}
-            <form
-              onSubmit={handleFormSubmit}
-              action="https://formspree.io/f/mzdwgyva"
-              method="POST"
+            {/* Formulaire EmailJS avec animations */}
+            <motion.form
+              ref={formRef}
+              onSubmit={sendEmail}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeInRight}
               className="space-y-4"
             >
-              <input
+              <motion.input
+                whileFocus={{ scale: 1.01 }}
                 type="text"
                 name="name"
                 placeholder="Your name"
                 className="w-full px-4 py-3 bg-white border border-[#C47A4D]/20 focus:border-[#C47A4D] outline-none transition-all rounded-lg"
                 required
               />
-              <input
+              <motion.input
+                whileFocus={{ scale: 1.01 }}
                 type="email"
                 name="email"
                 placeholder="Your email"
                 className="w-full px-4 py-3 bg-white border border-[#C47A4D]/20 focus:border-[#C47A4D] outline-none transition-all rounded-lg"
                 required
               />
-              <textarea
+              <motion.textarea
+                whileFocus={{ scale: 1.01 }}
                 name="message"
                 placeholder="Your message..."
                 rows={4}
@@ -557,35 +778,51 @@ export default function Home() {
               
               {/* Message de succès */}
               {formSubmitted && (
-                <div className="p-3 bg-green-100 text-green-700 rounded-lg text-sm text-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-3 bg-green-100 text-green-700 rounded-lg text-sm text-center"
+                >
                   ✓ Message sent successfully! I'll get back to you soon.
-                </div>
+                </motion.div>
               )}
               
               {/* Message d'erreur */}
               {formError && (
-                <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center"
+                >
                   ✗ Something went wrong. Please try again or email me directly.
-                </div>
+                </motion.div>
               )}
               
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full py-3 bg-[#C47A4D] text-white rounded-lg text-sm tracking-wider hover:bg-[#B56A3D] transition-all duration-300"
+                className="w-full py-3 bg-[#C47A4D] text-white rounded-lg text-sm tracking-wider hover:bg-[#B56A3D] transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 Send Message
-              </button>
-            </form>
+              </motion.button>
+            </motion.form>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ========== FOOTER ========== */}
-      <footer className="px-6 md:px-12 py-6 text-center border-t border-[#C47A4D]/10">
+      <motion.footer
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        viewport={{ once: true }}
+        className="px-6 md:px-12 py-6 text-center border-t border-[#C47A4D]/10"
+      >
         <p className="text-[#555555] text-xs">
           Enrica Lai © {new Date().getFullYear()} — All rights reserved
         </p>
-      </footer>
+      </motion.footer>
 
     </main>
   );
