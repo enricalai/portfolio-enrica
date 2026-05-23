@@ -22,7 +22,7 @@ const categories = [
 // ========== ARTWORKS DATABASE ==========
 const artworks = [
   { id: 1, title: "Serge Gainsbourg-1", technique: "Black stone", image: "/images/oeuvres/oeuvre-1.jpg", dimensions: "20x20cm", year: "2025", orientation: "square" },
-  { id: 2, title: "Serge Gainsbourg-2", technique: "Black stone", image: "/images/oeuvres/oeuvre-9.jpeg", dimensions: "24x32cm", year: "2019", orientation: "portrait" },
+  { id: 2, title: "Serge Gainsbourg-2", technique: "Black stone", image: "/images/oeuvres/oeuvre-9.jpg", dimensions: "24x32cm", year: "2019", orientation: "portrait" },
   { id: 3, title: "Jane Birkin", technique: "Acrylic", image: "/images/oeuvres/oeuvre-21.jpg", dimensions: "14x21cm", year: "2024", orientation: "portrait" },
   { id: 4, title: "Manga New Year", technique: "Watercolor", image: "/images/oeuvres/oeuvre-10.jpg", dimensions: "21x29cm", year: "2025", orientation: "portrait" },
   { id: 5, title: "Lemur-1", technique: "Colored pencil", image: "/images/oeuvres/oeuvre-3.jpg", dimensions: "21x29cm", year: "2023", orientation: "portrait" },
@@ -45,7 +45,7 @@ const artworks = [
   { id: 22, title: "I don't know", technique: "Watercolor", image: "/images/oeuvres/oeuvre-12.jpg", dimensions: "14x21cm", year: "2024", orientation: "portrait" },
   { id: 23, title: "Bubbles", technique: "Colored pencil", image: "/images/oeuvres/oeuvre-6.jpg", dimensions: "14x21cm", year: "2020", orientation: "portrait" },
   { id: 24, title: "Chameleon", technique: "Colored pencil", image: "/images/oeuvres/oeuvre-7.jpg", dimensions: "14x21cm", year: "2025", orientation: "portrait" },
-  { id: 25, title: "Manchild", technique: "Digital", image: "/images/oeuvres/oeuvre-16.jpeg", dimensions: "Undefined", year: "2025", orientation: "square" },
+  { id: 25, title: "Manchild", technique: "Digital", image: "/images/oeuvres/oeuvre-16.jpg", dimensions: "Undefined", year: "2025", orientation: "square" },
   { id: 26, title: "Little Jade", technique: "Watercolor", image: "/images/oeuvres/oeuvre-14.jpg", dimensions: "21x29cm", year: "2021", orientation: "portrait" },
   { id: 27, title: "Chinese Tea Time Party", technique: "Colored pencil", image: "/images/oeuvres/oeuvre-4.jpg", dimensions: "14x21cm", year: "2024", orientation: "portrait" },
 ];
