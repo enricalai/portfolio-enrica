@@ -457,7 +457,8 @@ what is essential is invisible to the eye.”
                     "2022 — Iray volan'ny Sary Hosodoko Edition, Sokela Hanigna Fianarantsoa",
                     "2022 — Formes et Couleur sans Limites Edition, Alliance Française, Fianarantsoa",
                     "2025 — Endrika sy Loko tsy Manam-petra Edition, Alliance Française, Fianarantsoa",
-                    "2026 — KAFE ROVA, Fianarantsoa"
+                    "2026 — KAFE ROVA, Fianarantsoa",
+                    "2026 — Formes et Couleur sans Limites Edition, Alliance Française, Fianarantsoa",
                   ].map((exhibition, idx) => (
                     <motion.li
                       key={idx}
